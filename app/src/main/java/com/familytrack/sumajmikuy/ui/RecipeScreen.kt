@@ -25,12 +25,14 @@ import com.familytrack.sumajmikuy.model.sampleRecipes
 import com.familytrack.sumajmikuy.ui.theme.BackgroundBeige
 import com.familytrack.sumajmikuy.ui.theme.PrimaryRed
 import com.familytrack.sumajmikuy.ui.theme.SecondaryOrange
+import com.familytrack.sumajmikuy.ui.theme.TextPrimary
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RecipeScreen(navController: NavController) {
     var searchText by remember { mutableStateOf("") }
     var selectedRegion by remember { mutableStateOf("Todas") }
+    var showInvalidCharDialog by remember { mutableStateOf(false) }
 
     val regions = listOf("Todas", "Altiplano", "Valles", "Oriente")
 
@@ -75,11 +77,17 @@ fun RecipeScreen(navController: NavController) {
         ) {
             OutlinedTextField(
                 value = searchText,
-                onValueChange = { searchText = it },
+                onValueChange = { newText ->
+                    val hasInvalidChars = newText.any { !it.isLetter() && it != ' ' }
+                    if (hasInvalidChars) {
+                        showInvalidCharDialog = true
+                    }
+                    searchText = newText.filter { it.isLetter() || it == ' ' }
+                },
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(16.dp),
-                placeholder = { Text("\u00BFQu\u00E9 cocinamos hoy? (ej. huevo, sajta)") },
+                placeholder = { Text("Busca por receta o ingrediente (ej. huevo, carne, sajta)") },
                 leadingIcon = { Icon(Icons.Default.Search, contentDescription = null, tint = PrimaryRed) },
                 shape = RoundedCornerShape(12.dp),
                 colors = OutlinedTextFieldDefaults.colors(
@@ -162,6 +170,34 @@ fun RecipeScreen(navController: NavController) {
                     }
                 }
             }
+        }
+
+        if (showInvalidCharDialog) {
+            AlertDialog(
+                onDismissRequest = { showInvalidCharDialog = false },
+                title = {
+                    Text(
+                        "Caracteres no permitidos",
+                        fontWeight = FontWeight.Bold
+                    )
+                },
+                text = { Text("Solo se permiten letras y espacios en el buscador.") },
+                confirmButton = {
+                    Button(
+                        onClick = { showInvalidCharDialog = false },
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = SecondaryOrange,
+                            contentColor = Color.White
+                        ),
+                        shape = RoundedCornerShape(8.dp)
+                    ) {
+                        Text("Entendido", fontWeight = FontWeight.Bold)
+                    }
+                },
+                containerColor = BackgroundBeige,
+                titleContentColor = PrimaryRed,
+                textContentColor = TextPrimary
+            )
         }
     }
 }
